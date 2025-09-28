@@ -1,7 +1,12 @@
+"use client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
 import { Badge } from "@/components/ui/badge.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { dashboardStats, formSubmissions, examNotifications, enrolledStudents } from "@/lib/dummy-data.js"
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { signOut } from 'firebase/auth'
+import { auth } from "../config/firebaseConfig"
 import { 
   Users, 
   FileText, 
@@ -22,6 +27,21 @@ export default function Dashboard() {
   const recentSubmissions = formSubmissions.slice(0, 3)
   const upcomingExams = examNotifications.slice(0, 3)
   const activeStudents = enrolledStudents.filter(student => student.status === 'active').length
+  const router = useRouter()
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true)
+      await signOut(auth)
+      router.replace('/sign-in')
+    } catch (e) {
+      console.error('Logout failed', e)
+      if (typeof window !== 'undefined') window.alert('Logout failed. Please try again.')
+    } finally {
+      setLoggingOut(false)
+    }
+  }
 
   return (
     <div className="space-y-[4vw] sm:space-y-[3vw] lg:space-y-[2vw] xl:space-y-[1.5vw]">
@@ -47,6 +67,9 @@ export default function Dashboard() {
           <Button size="sm" className="gap-[1vw] sm:gap-[0.8vw] lg:gap-[0.5vw] h-[8vw] sm:h-[6vw] lg:h-[3vw] xl:h-[2.5vw] px-[3vw] sm:px-[2vw] lg:px-[1vw] xl:px-[0.8vw] gradient-primary text-white border-0 shadow-sm hover:shadow-md transition-all text-[3vw] sm:text-[2.5vw] lg:text-[0.9vw] xl:text-[0.8vw]">
             <Upload className="h-[3vw] w-[3vw] sm:h-[2.5vw] sm:w-[2.5vw] lg:h-[1vw] lg:w-[1vw] xl:h-[0.8vw] xl:w-[0.8vw]" />
             <span className="hidden sm:inline">Upload PDF</span>
+          </Button>
+          <Button onClick={handleLogout} disabled={loggingOut} size="sm" variant="outline" className={`gap-[1vw] sm:gap-[0.8vw] lg:gap-[0.5vw] h-[8vw] sm:h-[6vw] lg:h-[3vw] xl:h-[2.5vw] px-[3vw] sm:px-[2vw] lg:px-[1vw] xl:px-[0.8vw] hover:bg-gray-50 border-gray-200 text-[3vw] sm:text-[2.5vw] lg:text-[0.9vw] xl:text-[0.8vw] ${loggingOut ? 'opacity-70' : ''}`}>
+            <span className="hidden sm:inline">{loggingOut ? 'Logging out...' : 'Logout'}</span>
           </Button>
         </div>
       </div>
