@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { dashboardStats, formSubmissions, examNotifications, enrolledStudents } from "@/lib/dummy-data.js"
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { signOut } from 'firebase/auth'
 import { auth } from "../config/firebaseConfig"
 import { 
@@ -29,6 +29,31 @@ export default function Dashboard() {
   const activeStudents = enrolledStudents.filter(student => student.status === 'active').length
   const router = useRouter()
   const [loggingOut, setLoggingOut] = useState(false)
+
+  // Bookings state (from Firestore)
+  const [bookings, setBookings] = useState([])
+  const [bookingsLoading, setBookingsLoading] = useState(true)
+  const [bookingsError, setBookingsError] = useState("")
+
+  useEffect(() => {
+    const loadBookings = async () => {
+      try {
+        setBookingsLoading(true)
+        setBookingsError("")
+        const res = await fetch('/api/bookings?orderBy=date&limit=5', { cache: 'no-store' })
+        const json = await res.json()
+        if (!res.ok || json?.success !== true) throw new Error(json?.message || 'Failed to load bookings')
+        const items = Array.isArray(json.data) ? json.data : []
+        setBookings(items)
+      } catch (e) {
+        console.error('[Dashboard] loadBookings error', e)
+        setBookingsError(e?.message || 'Failed to load bookings')
+      } finally {
+        setBookingsLoading(false)
+      }
+    }
+    loadBookings()
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -314,6 +339,59 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Recent Bookings (from Firestore) */}
+      <Card className="border-0 shadow-sm bg-white hover-lift">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-indigo-600" />
+                Recent Bookings
+              </CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">
+                Latest 5 bookings fetched from Firestore
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {bookingsLoading && (
+            <p className="text-sm text-muted-foreground">Loading bookings...</p>
+          )}
+          {bookingsError && !bookingsLoading && (
+            <p className="text-sm text-red-600">{bookingsError}</p>
+          )}
+          {!bookingsLoading && !bookingsError && bookings.length === 0 && (
+            <p className="text-sm text-muted-foreground">No bookings found.</p>
+          )}
+          {bookings.map((b) => {
+            const when = b.bookingDate ? new Date(b.bookingDate) : (b.createdAt ? new Date(b.createdAt) : null)
+            const whenStr = when ? when.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'
+            return (
+              <div key={b.id} className="group flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center group-hover:from-indigo-100 group-hover:to-indigo-200 transition-colors">
+                    <span className="text-sm font-bold text-indigo-700">
+                      {(b.name || b.studentName || 'U').toString().charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-gray-900">{b.name || b.studentName || 'Unnamed'}</p>
+                    <p className="text-xs text-muted-foreground">{b.email || b.phone || 'No contact'}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-foreground">{whenStr}{b.slot ? ` • ${b.slot}` : ''}</div>
+                  {b.status && (
+                    <div className="text-xs text-muted-foreground">{b.status}</div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </CardContent>
+      </Card>
 
       {/* Recent Form Submissions */}
       <Card className="border-0 shadow-sm bg-white hover-lift">

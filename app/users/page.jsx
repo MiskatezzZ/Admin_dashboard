@@ -1,9 +1,10 @@
+"use client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { Badge } from "@/components/ui/badge.jsx"
 import { Input } from "@/components/ui/input.jsx"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table.jsx"
-import { enrolledStudents } from "@/lib/dummy-data.js"
+import React, { useEffect, useState } from "react";
 import { 
   Users, 
   UserPlus, 
@@ -20,6 +21,43 @@ import {
 } from "lucide-react"
 
 export default function UsersEnrollments() {
+  // Client-side data from API with fallback to local dummy data
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await fetch('/api/users?limit=100', { cache: 'no-store' });
+      const json = await res.json();
+      if (!res.ok || json?.success !== true) throw new Error(json?.message || 'Failed to load users');
+      setStudents(Array.isArray(json.data) ? json.data : []);
+    } catch (e) {
+      setError(e?.message || 'Failed to load users');
+      setStudents([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const data = students;
+
+  const onDelete = async (id) => {
+    if (!confirm('Delete this user?')) return;
+    try {
+      const res = await fetch('/api/users', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+      const json = await res.json();
+      if (!res.ok || json?.success !== true) throw new Error(json?.message || 'Delete failed');
+      setStudents(prev => prev.filter(s => s.id !== id));
+    } catch (e) {
+      alert(e?.message || 'Delete failed');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
@@ -39,8 +77,8 @@ export default function UsersEnrollments() {
     })
   }
 
-  const activeStudents = enrolledStudents.filter(student => student.status === 'active')
-  const inactiveStudents = enrolledStudents.filter(student => student.status === 'inactive')
+  const activeStudents = data.filter(student => student.status === 'active')
+  const inactiveStudents = data.filter(student => student.status === 'inactive')
 
   return (
     <div className="space-y-[4vw] sm:space-y-[3vw] lg:space-y-[2vw] xl:space-y-[1.5vw]">
@@ -68,7 +106,7 @@ export default function UsersEnrollments() {
             </div>
           </CardHeader>
           <CardContent className="px-[4vw] sm:px-[3vw] lg:px-[2vw] xl:px-[1.5vw] pb-[4vw] sm:pb-[3vw] lg:pb-[2vw] xl:pb-[1.5vw]">
-            <div className="text-[6vw] sm:text-[4.5vw] lg:text-[2.2vw] xl:text-[1.8vw] font-bold text-gray-900">{enrolledStudents.length}</div>
+            <div className="text-[6vw] sm:text-[4.5vw] lg:text-[2.2vw] xl:text-[1.8vw] font-bold text-gray-900">{data.length}</div>
             <p className="text-[2.5vw] sm:text-[2vw] lg:text-[0.8vw] xl:text-[0.7vw] text-muted-foreground mt-[1vw] sm:mt-[0.8vw] lg:mt-[0.3vw] xl:mt-[0.2vw]">
               <span className="text-emerald-600 font-medium">+2</span> this month
             </p>
@@ -114,7 +152,7 @@ export default function UsersEnrollments() {
           </CardHeader>
           <CardContent className="px-[4vw] sm:px-[3vw] lg:px-[2vw] xl:px-[1.5vw] pb-[4vw] sm:pb-[3vw] lg:pb-[2vw] xl:pb-[1.5vw]">
             <div className="text-[6vw] sm:text-[4.5vw] lg:text-[2.2vw] xl:text-[1.8vw] font-bold text-gray-900">
-              {enrolledStudents.filter(s => s.grade === '12th').length}
+              {data.filter(s => s.grade === '12th').length}
             </div>
             <p className="text-[2.5vw] sm:text-[2vw] lg:text-[0.8vw] xl:text-[0.7vw] text-muted-foreground mt-[1vw] sm:mt-[0.8vw] lg:mt-[0.3vw] xl:mt-[0.2vw]">
               College-bound students
@@ -132,7 +170,7 @@ export default function UsersEnrollments() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Object.entries(
-              enrolledStudents.reduce((acc, student) => {
+              data.reduce((acc, student) => {
                 acc[student.course] = (acc[student.course] || 0) + 1
                 return acc
               }, {})
@@ -185,7 +223,25 @@ export default function UsersEnrollments() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {enrolledStudents.map((student) => (
+              {(loading && !students.length) ? (
+                <TableRow>
+                  <TableCell colSpan={7}>
+                    <span className="text-sm text-muted-foreground">Loading...</span>
+                  </TableCell>
+                </TableRow>
+              ) : error && !students.length ? (
+                <TableRow>
+                  <TableCell colSpan={7}>
+                    <span className="text-sm text-red-600">{error}</span>
+                  </TableCell>
+                </TableRow>
+              ) : !students.length ? (
+                <TableRow>
+                  <TableCell colSpan={7}>
+                    <span className="text-sm text-muted-foreground">No users found.</span>
+                  </TableCell>
+                </TableRow>
+              ) : data.map((student) => (
                 <TableRow key={student.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -240,12 +296,18 @@ export default function UsersEnrollments() {
                       <Button variant="ghost" size="icon">
                         <Mail className="h-4 w-4" />
                       </Button>
+                      <Button variant="destructive" size="sm" onClick={() => onDelete(student.id)} title="Delete">
+                        Delete
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          <div className="mt-3 flex justify-end">
+            <Button variant="outline" onClick={load} disabled={loading}>{loading ? 'Refreshing...' : 'Refresh'}</Button>
+          </div>
         </CardContent>
       </Card>
 
