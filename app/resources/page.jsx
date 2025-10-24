@@ -11,8 +11,6 @@ export default function ResourcesPage() {
   const router = useRouter();
   const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
   const [uploading, setUploading] = useState(false); // Cloudinary upload
   const [saving, setSaving] = useState(false);       // Firestore write
@@ -37,7 +35,6 @@ export default function ResourcesPage() {
     }
     setStatus("");
     setFile(f);
-    if (!title) setTitle(f.name.replace(/\.pdf$/i, ""));
   };
 
   // Load list from our GET API
@@ -106,8 +103,8 @@ export default function ResourcesPage() {
       const docRef = await addDoc(
         collection(db, "resources", "Free pds", "uploads"),
         {
-          title: title || file.name,
-          category: category || "General",
+          title: (file.name || "").replace(/\.pdf$/i, ""),
+          category: "General",
           filename: file.name,
           size: file.size,
           contentType: file.type,
@@ -127,8 +124,6 @@ export default function ResourcesPage() {
       // setUploading(false);
       setStatus(`Uploaded to Cloudinary and saved (id: ${docRef.id}).`);
       setFile(null);
-      setTitle("");
-      setCategory("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (e) {
       console.error("[RESOURCES] upload error", e);
@@ -170,27 +165,35 @@ export default function ResourcesPage() {
       </div>
 
       {/* Inline Firestore upload (small PDFs only) */}
-      <div className="rounded-xl border border-gray-100 bg-white p-5 space-y-4">
+      <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm space-y-4">
         <h2 className="text-lg font-semibold">Upload Free PDFs (Firestore)</h2>
         <p className="text-sm text-muted-foreground">For demo use: stores the file directly inside Firestore (max ~900KB). For larger files, we should use Firebase Storage and keep only metadata in Firestore.</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="sm:col-span-2">
+        <div className="space-y-3">
+          <div>
             <label className="block text-sm font-medium text-gray-700">PDF file</label>
-            <input ref={fileInputRef} type="file" accept="application/pdf" onChange={onPickFile} className="mt-1 block w-full text-sm" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Title</label>
-            <input value={title} onChange={(e)=>setTitle(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-gray-900 outline-none" placeholder="e.g. SAT Maths Notes" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Category</label>
-            <input value={category} onChange={(e)=>setCategory(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-gray-900 outline-none" placeholder="e.g. SAT Prep" />
+            <div className="mt-2">
+              <label htmlFor="pdf-upload" className="flex flex-col items-center justify-center w-full rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors p-6 cursor-pointer">
+                <Upload className="h-8 w-8 text-gray-500 mb-3" />
+                <span className="text-sm font-medium text-gray-700">Drag and drop your PDF here</span>
+                <span className="text-xs text-gray-500">or click to browse</span>
+              </label>
+              <input id="pdf-upload" ref={fileInputRef} type="file" accept="application/pdf" onChange={onPickFile} className="hidden" />
+              {file && (
+                <div className="mt-3 text-sm text-gray-700">
+                  Selected: <span className="font-medium">{file.name}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         {status && <p className="text-sm text-blue-600">{status}</p>}
         <div className="flex gap-2">
-          <Button onClick={onUploadViaApi} disabled={uploading || saving || !file} className={(uploading || saving) ? "opacity-70" : ""}>
-            {uploading ? "Uploading..." : saving ? "Saving..." : "Upload"}
+          <Button
+            onClick={onUploadViaApi}
+            disabled={uploading || saving || !file}
+            className={`inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white px-4 py-2 shadow-lg hover:shadow-xl hover:from-indigo-500 hover:to-fuchsia-500 disabled:opacity-60 disabled:cursor-not-allowed`}
+         >
+            {uploading ? "Uploading..." : saving ? "Saving..." : (<><Upload className="h-4 w-4" /> Upload</>)}
           </Button>
         </div>
       </div>
