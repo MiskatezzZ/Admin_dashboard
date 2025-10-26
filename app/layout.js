@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "@/styles/globals.css";
 import { DashboardLayout } from "@/components/layout/dashboard-layout.jsx";
 import { AuthProvider } from "./providers/AuthProvider.jsx";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -24,6 +25,31 @@ export default function RootLayout({ children }) {
             {children}
         </DashboardLayout>
         </AuthProvider>
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+              fontSize: '14px',
+              borderRadius: '8px',
+              padding: '12px 20px',
+            },
+            success: {
+              iconTheme: {
+                primary: '#10b981',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
       </body>
     </html>
   );

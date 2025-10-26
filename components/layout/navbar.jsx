@@ -69,19 +69,19 @@ export function Navbar() {
 
           {/* Dropdown menu */}
           {showProfileDropdown && (
-            <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border bg-white/95 backdrop-blur-md p-2 shadow-lg">
-              <Button variant="ghost" className="w-full justify-start gap-3 h-9 hover:bg-accent/50" size="sm">
-                <User className="h-4 w-4" />
-                <span className="text-sm">Profile</span>
+            <div className="absolute right-0 top-full mt-[1.5vw] sm:mt-[1.2vw] lg:mt-[0.5vw] xl:mt-[0.4vw] w-[45vw] sm:w-[35vw] lg:w-[14vw] xl:w-[12vw] rounded-[2vw] sm:rounded-[1.5vw] lg:rounded-[0.8vw] xl:rounded-[0.6vw] border bg-white/95 backdrop-blur-md p-[1.5vw] sm:p-[1.2vw] lg:p-[0.5vw] xl:p-[0.4vw] shadow-lg">
+              <Button variant="ghost" className="w-full justify-start gap-[2.5vw] sm:gap-[2vw] lg:gap-[0.8vw] xl:gap-[0.6vw] h-[8vw] sm:h-[6.5vw] lg:h-[2.5vw] xl:h-[2vw] hover:bg-accent/50" size="sm">
+                <User className="h-[3.5vw] w-[3.5vw] sm:h-[2.8vw] sm:w-[2.8vw] lg:h-[1vw] lg:w-[1vw] xl:h-[0.8vw] xl:w-[0.8vw]" />
+                <span className="text-[3vw] sm:text-[2.5vw] lg:text-[0.9vw] xl:text-[0.8vw]">Profile</span>
               </Button>
-              <Button variant="ghost" className="w-full justify-start gap-3 h-9 hover:bg-accent/50" size="sm">
-                <Settings className="h-4 w-4" />
-                <span className="text-sm">Settings</span>
+              <Button variant="ghost" className="w-full justify-start gap-[2.5vw] sm:gap-[2vw] lg:gap-[0.8vw] xl:gap-[0.6vw] h-[8vw] sm:h-[6.5vw] lg:h-[2.5vw] xl:h-[2vw] hover:bg-accent/50" size="sm">
+                <Settings className="h-[3.5vw] w-[3.5vw] sm:h-[2.8vw] sm:w-[2.8vw] lg:h-[1vw] lg:w-[1vw] xl:h-[0.8vw] xl:w-[0.8vw]" />
+                <span className="text-[3vw] sm:text-[2.5vw] lg:text-[0.9vw] xl:text-[0.8vw]">Settings</span>
               </Button>
-              <div className="h-px bg-border my-2" />
-              <Button variant="ghost" className="w-full justify-start gap-3 h-9 text-destructive hover:bg-destructive/10" size="sm">
-                <LogOut className="h-4 w-4" />
-                <span className="text-sm">Logout</span>
+              <div className="h-[0.2vw] sm:h-[0.15vw] lg:h-[0.05vw] xl:h-[0.04vw] bg-border my-[1.5vw] sm:my-[1.2vw] lg:my-[0.5vw] xl:my-[0.4vw]" />
+              <Button variant="ghost" className="w-full justify-start gap-[2.5vw] sm:gap-[2vw] lg:gap-[0.8vw] xl:gap-[0.6vw] h-[8vw] sm:h-[6.5vw] lg:h-[2.5vw] xl:h-[2vw] text-destructive hover:bg-destructive/10" size="sm">
+                <LogOut className="h-[3.5vw] w-[3.5vw] sm:h-[2.8vw] sm:w-[2.8vw] lg:h-[1vw] lg:w-[1vw] xl:h-[0.8vw] xl:w-[0.8vw]" />
+                <span className="text-[3vw] sm:text-[2.5vw] lg:text-[0.9vw] xl:text-[0.8vw]">Logout</span>
               </Button>
             </div>
           )}
