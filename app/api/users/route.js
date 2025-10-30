@@ -45,6 +45,7 @@ export async function GET(request) {
       return {
         id: d.id,
         name: x.name || '',
+        username: x.username || '',
         email: x.email || '',
         course: x.course || '',
         enrolledDate: toIso(x.enrolledDate) || toIso(x.createdAt) || null,

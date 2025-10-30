@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button.jsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx";
-import { FileText, BookOpen, Upload, Trash2 } from "lucide-react";
+import { Upload, Trash2, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { db } from "../config/firebaseConfig";
@@ -23,8 +23,6 @@ export default function ResourcesPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
-  const goToFreeNotes = () => router.push("/resources?tab=notes");
-  const goToBooks = () => router.push("/resources?tab=books");
   const goToUpload = () => fileInputRef.current?.click();
 
   const onPickFile = (e) => {
@@ -177,21 +175,9 @@ export default function ResourcesPage() {
   return (
     <div className="space-y-[4vw] sm:space-y-[3vw] md:space-y-[2vw] xl:space-y-[1.5vw]">
       {/* Page Header */}
-      <div className="flex flex-col gap-[3vw] sm:gap-[2.5vw] md:gap-[1.5vw] xl:gap-[1vw] sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-[6vw] sm:text-[4.5vw] md:text-[3vw] xl:text-[2vw] font-bold text-gray-900">Resources</h1>
-          <p className="text-[3.5vw] sm:text-[2.8vw] md:text-[1.8vw] xl:text-[1vw] text-gray-500 mt-[1vw] sm:mt-[0.8vw] md:mt-[0.5vw] xl:mt-[0.3vw]">Upload and manage study materials for students</p>
-        </div>
-        <div className="flex gap-[2vw] sm:gap-[1.5vw] md:gap-[0.8vw] xl:gap-[0.6vw]">
-          <Button onClick={goToFreeNotes} variant="outline" className="gap-[1.5vw] sm:gap-[1.2vw] md:gap-[0.6vw] xl:gap-[0.4vw] h-[9vw] sm:h-[7vw] md:h-[3.5vw] xl:h-[2.5vw] text-[2.8vw] sm:text-[2.3vw] md:text-[1.4vw] xl:text-[0.9vw] font-medium border-gray-300">
-            <FileText className="h-[3.5vw] w-[3.5vw] sm:h-[2.8vw] sm:w-[2.8vw] md:h-[1.4vw] md:w-[1.4vw] xl:h-[1vw] xl:w-[1vw]" />
-            Free Notes
-          </Button>
-          <Button onClick={goToBooks} variant="outline" className="gap-[1.5vw] sm:gap-[1.2vw] md:gap-[0.6vw] xl:gap-[0.4vw] h-[9vw] sm:h-[7vw] md:h-[3.5vw] xl:h-[2.5vw] text-[2.8vw] sm:text-[2.3vw] md:text-[1.4vw] xl:text-[0.9vw] font-medium border-gray-300">
-            <BookOpen className="h-[3.5vw] w-[3.5vw] sm:h-[2.8vw] sm:w-[2.8vw] md:h-[1.4vw] md:w-[1.4vw] xl:h-[1vw] xl:w-[1vw]" />
-            Books
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-[6vw] sm:text-[4.5vw] md:text-[3vw] xl:text-[2vw] font-bold text-gray-900">Resources</h1>
+        <p className="text-[3.5vw] sm:text-[2.8vw] md:text-[1.8vw] xl:text-[1vw] text-gray-500 mt-[1vw] sm:mt-[0.8vw] md:mt-[0.5vw] xl:mt-[0.3vw]">Upload and manage study materials for students</p>
       </div>
 
       {/* Upload Section */}

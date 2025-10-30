@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from "../../../config/firebaseConfig";
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
 
 export const runtime = 'nodejs';
 
@@ -14,6 +14,13 @@ export async function GET(request, { params }) {
     if (!snap.exists()) return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
 
     const x = snap.data() || {};
+
+    const asArray = (val) => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val.filter(Boolean);
+      if (typeof val === 'string') return [val];
+      return [];
+    };
 
     const isPdfUrl = (u) => /\.pdf(?:\?.*)?$/i.test(u || '');
     const isImageUrl = (u) => /\.(png|jpe?g|gif|webp|svg|bmp|ico|tiff?|heic|heif)(?:\?.*)?$/i.test(u || '');
@@ -38,9 +45,87 @@ export async function GET(request, { params }) {
       return acc;
     };
 
-    const attachments = collectFromUploads(x.uploads);
+    const toIso = (v) => {
+      if (!v) return null;
+      if (typeof v.toDate === 'function') return v.toDate().toISOString();
+      try { return new Date(v).toISOString(); } catch { return null; }
+    };
 
-    return NextResponse.json({ success: true, user: { id: snap.id, ...x }, attachments });
+    // Fetch user's applications with ordering fallbacks
+    let appSnap;
+    const col = collection(db, 'users', userId, 'applications');
+    try {
+      appSnap = await getDocs(query(col, orderBy('createdAt', 'desc')));
+    } catch (e1) {
+      try {
+        appSnap = await getDocs(query(col, orderBy('submittedAt', 'desc')));
+      } catch (e2) {
+        try {
+          appSnap = await getDocs(query(col, orderBy('date', 'desc')));
+        } catch (e3) {
+          appSnap = await getDocs(query(col));
+        }
+      }
+    }
+
+    const apps = (appSnap?.docs || []).map(d => {
+      const a = d.data() || {};
+      const upA = collectFromUploads(a.uploads);
+      const createdAt = toIso(a.createdAt);
+      const submittedAt = toIso(a.submittedAt);
+      const dateFallback = toIso(a.date);
+      const appliedAt = createdAt || submittedAt || dateFallback;
+      const pdfs = [
+        ...asArray(a.pdfs),
+        ...asArray(a.pdfUrls),
+        ...asArray(a.pdfUrl),
+        ...(a && a.attachments ? asArray(a.attachments.pdfs) : []),
+        ...upA.pdfs,
+      ].filter(Boolean);
+      const images = [
+        ...asArray(a.images),
+        ...asArray(a.imageUrls),
+        ...asArray(a.imageUrl),
+        ...(a && a.attachments ? asArray(a.attachments.images) : []),
+        ...(a && a.photos ? asArray(a.photos) : []),
+        ...upA.images,
+      ].filter(Boolean);
+      return {
+        id: d.id,
+        path: d.ref.path,
+        form: a.form || a.category || '',
+        status: a.status || 'pending',
+        createdAt,
+        submittedAt,
+        appliedAt,
+        date: dateFallback,
+        pdfs,
+        images,
+      };
+    });
+
+    // Aggregate attachments from user doc + applications
+    const up = collectFromUploads(x.uploads);
+    const agg = apps.reduce((acc, a) => {
+      if (Array.isArray(a.pdfs)) acc.pdfs.push(...a.pdfs);
+      if (Array.isArray(a.images)) acc.images.push(...a.images);
+      return acc;
+    }, { pdfs: [...up.pdfs, ...asArray(x.pdfs), ...asArray(x.pdfUrls), ...asArray(x.pdfUrl), ...(x.attachments ? asArray(x.attachments.pdfs) : [])],
+          images: [...up.images, ...asArray(x.images), ...asArray(x.imageUrls), ...asArray(x.imageUrl), ...(x.attachments ? asArray(x.attachments.images) : []), ...(x.photos ? asArray(x.photos) : [])] });
+
+    const attachments = {
+      pdfs: Array.from(new Set(agg.pdfs.filter(Boolean))),
+      images: Array.from(new Set(agg.images.filter(Boolean)))
+    };
+
+    const userData = {
+      id: snap.id,
+      ...x,
+      createdAt: toIso(x.createdAt),
+      updatedAt: toIso(x.updatedAt),
+    };
+
+    return NextResponse.json({ success: true, user: userData, attachments, applications: apps });
   } catch (error) {
     return NextResponse.json({ success: false, message: 'Failed to fetch user', error: error?.message }, { status: 500 });
   }
