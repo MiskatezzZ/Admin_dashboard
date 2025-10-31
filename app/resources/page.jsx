@@ -14,8 +14,8 @@ export default function ResourcesPage() {
   const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState("");
-  const [uploading, setUploading] = useState(false); // Cloudinary upload
-  const [saving, setSaving] = useState(false);       // Firestore write
+  const [uploading, setUploading] = useState(false); 
+  const [saving, setSaving] = useState(false);       
   const { user } = useAuthContext();
 
   // Listing state

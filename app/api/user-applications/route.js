@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from "../../config/firebaseConfig";
-import { collectionGroup, collection, getDocs, query, orderBy, limit as fbLimit } from 'firebase/firestore';
+import { collectionGroup, collection, getDocs, query, orderBy, limit as fbLimit, doc, updateDoc } from 'firebase/firestore';
 
 export const runtime = 'nodejs';
 
@@ -117,5 +117,44 @@ export async function GET(request) {
     return NextResponse.json({ success: true, data, total: data.length, limit });
   } catch (error) {
     return NextResponse.json({ success: false, message: 'Failed to fetch applications', error: error?.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    const body = await request.json();
+    const { id, status, path } = body;
+
+    if (!status || !['accepted', 'rejected', 'pending', 'seen'].includes(status)) {
+      return NextResponse.json({ success: false, message: 'Invalid status' }, { status: 400 });
+    }
+
+    // If path is provided, use it directly
+    if (path) {
+      const docRef = doc(db, path);
+      await updateDoc(docRef, { status });
+      return NextResponse.json({ success: true, message: 'Status updated successfully' });
+    }
+
+    // If only id is provided, we need to find the document
+    // This requires searching through the collection
+    if (!id) {
+      return NextResponse.json({ success: false, message: 'Document ID or path is required' }, { status: 400 });
+    }
+
+    // Search for the document in the collection group
+    const cg = collectionGroup(db, 'applications');
+    const snap = await getDocs(cg);
+    
+    const targetDoc = snap.docs.find(d => d.id === id);
+    if (!targetDoc) {
+      return NextResponse.json({ success: false, message: 'Document not found' }, { status: 404 });
+    }
+
+    await updateDoc(targetDoc.ref, { status });
+    return NextResponse.json({ success: true, message: 'Status updated successfully' });
+  } catch (error) {
+    console.error('PATCH error:', error);
+    return NextResponse.json({ success: false, message: 'Failed to update status', error: error?.message }, { status: 500 });
   }
 }

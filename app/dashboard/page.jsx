@@ -1,7 +1,7 @@
 "use client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
 import { useEffect, useState } from 'react'
-import { Calendar, Clock, ArrowUpRight, Users, FileText, FolderOpen, Eye, EyeOff, TrendingUp } from "lucide-react"
+import { Calendar, Clock, ArrowUpRight, Users, FileText, FolderOpen, Eye, EyeOff, TrendingUp, CheckCircle, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge.jsx"
 import Link from "next/link"
@@ -18,6 +18,7 @@ export default function Dashboard() {
   })
   const [recentApplications, setRecentApplications] = useState([])
   const [loading, setLoading] = useState(true)
+  const [processingBooking, setProcessingBooking] = useState(null)
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -73,18 +74,18 @@ export default function Dashboard() {
       link: "/users"
     },
     {
-      title: "Total Applications",
+      title: "Total Bookings",
       value: stats.totalApplications.toString(),
-      icon: FileText,
+      icon: Calendar,
       bgGradient: "from-indigo-500 to-indigo-600",
-      link: "/forms"
+      link: "/bookings"
     },
     {
-      title: "Pending Review",
+      title: "Pending Bookings",
       value: stats.pendingApplications.toString(),
-      icon: EyeOff,
+      icon: Clock,
       bgGradient: "from-orange-500 to-orange-600",
-      link: "/forms"
+      link: "/bookings"
     },
     {
       title: "Resources",
@@ -147,13 +148,13 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-[4.5vw] sm:text-[3.5vw] md:text-[2.2vw] xl:text-[1.4vw] font-bold text-gray-900">
-                  Recent Applications
+                  Recent Bookings
                 </CardTitle>
                 <CardDescription className="text-[3vw] sm:text-[2.5vw] md:text-[1.5vw] xl:text-[0.95vw] text-gray-500 mt-[0.8vw] sm:mt-[0.6vw] md:mt-[0.3vw] xl:mt-[0.2vw]">
-                  Latest student submissions
+                  Latest booking requests
                 </CardDescription>
               </div>
-              <Link href="/forms">
+              <Link href="/bookings">
                 <Button variant="outline" size="sm" className="h-[7vw] sm:h-[5.5vw] md:h-[3vw] xl:h-[2.2vw] text-[2.8vw] sm:text-[2.3vw] md:text-[1.4vw] xl:text-[0.85vw] font-medium border-gray-300">
                   View All
                   <ArrowUpRight className="ml-[1vw] sm:ml-[0.8vw] md:ml-[0.4vw] xl:ml-[0.3vw] h-[3vw] w-[3vw] sm:h-[2.5vw] sm:w-[2.5vw] md:h-[1.2vw] md:w-[1.2vw] xl:h-[0.85vw] xl:w-[0.85vw]" />
@@ -166,53 +167,154 @@ export default function Dashboard() {
               <div className="p-8 text-center text-gray-500">Loading applications...</div>
             ) : recentApplications.length === 0 ? (
               <div className="p-8 text-center">
-                <FileText className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-500 font-medium">No applications yet</p>
-                <p className="text-sm text-gray-400 mt-1">Applications will appear here when submitted</p>
+                <Calendar className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                <p className="text-gray-500 font-medium">No bookings yet</p>
+                <p className="text-sm text-gray-400 mt-1">Booking requests will appear here</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {recentApplications.map((app, idx) => (
-                  <button
-                    key={app.id}
-                    onClick={() => router.push(app.userId ? `/forms/${app.userId}` : '/forms')}
-                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
-                        <span className="text-sm font-bold text-white">
-                          {(app.name || 'U').charAt(0).toUpperCase()}
-                        </span>
+                {recentApplications.map((app, idx) => {
+                  const bookingTime = app.createdAt?.toDate ? app.createdAt.toDate() : (app.createdAt ? new Date(app.createdAt) : new Date())
+                  const timeStr = bookingTime.toLocaleString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true 
+                  })
+                  const isPending = app.status === 'pending' || !app.status
+                  
+                  return (
+                    <div
+                      key={app.id}
+                      className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
+                          <span className="text-sm font-bold text-white">
+                            {(app.name || 'U').charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 truncate">
+                            {app.name || 'Unnamed'}
+                          </p>
+                          <p className="text-sm text-gray-500 truncate">
+                            {app.email || app.phone || 'No contact'}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <Clock className="h-3 w-3 text-gray-400" />
+                            <p className="text-xs text-gray-500">
+                              {timeStr}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">
-                          {app.name || 'Unnamed'}
-                        </p>
-                        <p className="text-sm text-gray-500 truncate">
-                          {app.email || app.phone || 'No contact'}
-                        </p>
-                      </div>
+                      {isPending ? (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            onClick={async () => {
+                              setProcessingBooking(app.id + '-accept')
+                              try {
+                                // Update booking status to accepted
+                                const res = await fetch('/api/user-applications', {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ 
+                                    id: app.id, 
+                                    path: app.path, 
+                                    status: 'accepted' 
+                                  })
+                                })
+                                if (res.ok) {
+                                  setRecentApplications(prev => 
+                                    prev.map(a => a.id === app.id ? { ...a, status: 'accepted' } : a)
+                                  )
+                                  // Update stats
+                                  setStats(prev => ({
+                                    ...prev,
+                                    pendingApplications: prev.pendingApplications - 1,
+                                    seenApplications: prev.seenApplications + 1
+                                  }))
+                                }
+                              } catch (error) {
+                                console.error('Accept error:', error)
+                              } finally {
+                                setProcessingBooking(null)
+                              }
+                            }}
+                            disabled={processingBooking === app.id + '-accept'}
+                            className="h-8 px-3 bg-green-600 hover:bg-green-700 text-white text-xs"
+                          >
+                            <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                            Accept
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              setProcessingBooking(app.id + '-reject')
+                              try {
+                                // Update booking status to rejected
+                                const res = await fetch('/api/user-applications', {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ 
+                                    id: app.id, 
+                                    path: app.path, 
+                                    status: 'rejected' 
+                                  })
+                                })
+                                if (res.ok) {
+                                  setRecentApplications(prev => 
+                                    prev.map(a => a.id === app.id ? { ...a, status: 'rejected' } : a)
+                                  )
+                                  // Update stats
+                                  setStats(prev => ({
+                                    ...prev,
+                                    pendingApplications: prev.pendingApplications - 1
+                                  }))
+                                }
+                              } catch (error) {
+                                console.error('Reject error:', error)
+                              } finally {
+                                setProcessingBooking(null)
+                              }
+                            }}
+                            disabled={processingBooking === app.id + '-reject'}
+                            className="h-8 px-3 border-red-300 text-red-600 hover:bg-red-50 text-xs"
+                          >
+                            <XCircle className="h-3.5 w-3.5 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      ) : (
+                        <Badge className={`capitalize text-xs px-2 py-1 font-medium ${
+                          app.status === 'accepted' ? 'bg-green-100 text-green-700' : 
+                          app.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                          app.status === 'seen' ? 'bg-blue-100 text-blue-700' : 
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {app.status}
+                        </Badge>
+                      )}
                     </div>
-                    <Badge className={`capitalize text-xs px-2 py-1 font-medium ${
-                      app.status === 'seen' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                    }`}>
-                      {app.status || 'pending'}
-                    </Badge>
-                  </button>
-                ))}
+                  )
+                })}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Status Breakdown */}
+        {/* Quick Stats & Actions */}
         <Card className="border border-gray-200 shadow-sm">
-          <CardHeader className="border-b border-gray-100 bg-gray-50/50">
+          <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-violet-50">
             <CardTitle className="text-[4.5vw] sm:text-[3.5vw] md:text-[2.2vw] xl:text-[1.4vw] font-bold text-gray-900">
-              Status Overview
+              Quick Overview
             </CardTitle>
             <CardDescription className="text-[3vw] sm:text-[2.5vw] md:text-[1.5vw] xl:text-[0.95vw] text-gray-500 mt-[0.8vw] sm:mt-[0.6vw] md:mt-[0.3vw] xl:mt-[0.2vw]">
-              Application breakdown
+              Booking insights
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -220,44 +322,63 @@ export default function Dashboard() {
               <div className="text-center text-gray-500">Loading...</div>
             ) : (
               <>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                      <span className="text-sm font-medium text-gray-700">Pending Review</span>
-                    </div>
-                    <span className="text-lg font-bold text-gray-900">{stats.pendingApplications}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                      <span className="text-sm font-medium text-gray-700">Reviewed</span>
-                    </div>
-                    <span className="text-lg font-bold text-gray-900">{stats.seenApplications}</span>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-gray-100">
+                {/* Today's Bookings */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-gray-500 uppercase">Completion Rate</span>
-                    <span className="text-xs font-bold text-gray-700">
-                      {stats.totalApplications > 0 ? Math.round((stats.seenApplications / stats.totalApplications) * 100) : 0}%
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-indigo-600" />
+                      <span className="text-sm font-semibold text-gray-700">Today's Bookings</span>
+                    </div>
+                    <span className="text-2xl font-bold text-indigo-600">
+                      {recentApplications.filter(app => {
+                        const bookingDate = app.createdAt?.toDate ? app.createdAt.toDate() : (app.createdAt ? new Date(app.createdAt) : new Date())
+                        const today = new Date()
+                        return bookingDate.toDateString() === today.toDateString()
+                      }).length}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all"
-                      style={{ width: `${stats.totalApplications > 0 ? (stats.seenApplications / stats.totalApplications) * 100 : 0}%` }}
-                    ></div>
-                  </div>
+                  <p className="text-xs text-gray-600">New requests today</p>
                 </div>
 
-                <Link href="/forms">
-                  <Button className="w-full mt-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800">
-                    Review Pending
-                    <ArrowUpRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
+                {/* Pending Actions */}
+                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg p-4 border border-orange-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-orange-600" />
+                      <span className="text-sm font-semibold text-gray-700">Needs Attention</span>
+                    </div>
+                    <span className="text-2xl font-bold text-orange-600">{stats.pendingApplications}</span>
+                  </div>
+                  <p className="text-xs text-gray-600">Pending approval</p>
+                </div>
+
+                {/* Confirmed Bookings */}
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-semibold text-gray-700">Confirmed</span>
+                    </div>
+                    <span className="text-2xl font-bold text-green-600">{stats.seenApplications}</span>
+                  </div>
+                  <p className="text-xs text-gray-600">Accepted bookings</p>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="pt-2 space-y-2">
+                  <Link href="/bookings">
+                    <Button className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-sm">
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Manage Bookings
+                    </Button>
+                  </Link>
+                  <Link href="/users">
+                    <Button variant="outline" className="w-full border-gray-300 hover:bg-gray-50">
+                      <Users className="mr-2 h-4 w-4" />
+                      View Customers
+                    </Button>
+                  </Link>
+                </div>
               </>
             )}
           </CardContent>
