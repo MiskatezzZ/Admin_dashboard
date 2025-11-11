@@ -21,6 +21,9 @@ export default function FormSubmissions() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
+  
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
 
   useEffect(() => {
     const load = async () => {
@@ -83,9 +86,12 @@ export default function FormSubmissions() {
   }
 
   const deleteUser = async (app) => {
-    if (!confirm(`Are you sure you want to delete ${app.name || 'this user'}? This will delete the user and all their applications permanently.`)) {
-      return
-    }
+    setDeleteConfirm(app)
+  }
+
+  const confirmDelete = async () => {
+    const app = deleteConfirm
+    setDeleteConfirm(null)
 
     toast.promise(
       (async () => {
@@ -464,6 +470,59 @@ export default function FormSubmissions() {
           </div>
         )}
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] animate-in fade-in duration-200"
+            onClick={() => setDeleteConfirm(null)}
+          />
+          
+          {/* Modal */}
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-[90vw] max-w-md animate-in zoom-in-95 fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+              {/* Header */}
+              <div className="p-6 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-100">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <Trash2 className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Confirm Delete</h3>
+                    <p className="text-sm text-gray-600 mt-0.5">This action cannot be undone</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-6">
+                <p className="text-gray-700">
+                  Are you sure you want to delete <span className="font-semibold text-gray-900">{deleteConfirm.name || 'this user'}</span>? This will delete the user and all their applications permanently.
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteConfirm(null)}
+                  className="px-6 font-semibold hover:bg-white transition-colors"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmDelete}
+                  className="px-6 bg-red-600 hover:bg-red-700 text-white font-semibold shadow-sm hover:shadow-md transition-all"
+                >
+                  Delete User
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

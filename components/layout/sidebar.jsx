@@ -17,6 +17,7 @@ import {
 import { useState } from "react"
 import { auth } from "@/app/config/firebaseConfig.js"
 import { signOut } from "firebase/auth"
+import toast from "react-hot-toast"
 
 const iconMap = {
   LayoutDashboard,
@@ -29,7 +30,25 @@ export function Sidebar() {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [showLogoutModal, setShowLogoutModal] = useState(false)
+  
+  // Hide logout button on sign-in page
+  const isSignInPage = pathname === '/sign-in'
+
+  const handleLogout = async () => {
+    toast.promise(
+      (async () => {
+        await signOut(auth)
+        setTimeout(() => {
+          window.location.href = '/sign-in'
+        }, 150)
+      })(),
+      {
+        loading: 'Logging out...',
+        success: 'Logged out successfully!',
+        error: (err) => err?.message || 'Failed to logout',
+      }
+    )
+  }
 
   return (
     <>
@@ -66,13 +85,13 @@ export function Sidebar() {
             <div className="w-[12vw] h-[12vw] sm:w-[9vw] sm:h-[9vw] lg:w-[3vw] lg:h-[3vw] xl:w-[2.5vw] xl:h-[2.5vw] rounded-2xl bg-white shadow-lg border border-gray-100 flex items-center justify-center overflow-hidden">
               <img 
                 src="/askpfp.png" 
-                alt="Ask Your Councillor" 
+                alt="Ask Your Councellor" 
                 className="w-full h-full object-cover"
               />
             </div>
             {!isCollapsed && (
               <div>
-                <span className="font-bold text-[3.5vw] sm:text-[2.8vw] lg:text-[1vw] xl:text-[0.9vw] text-foreground tracking-tight">Ask Your Councillor</span>
+                <span className="font-bold text-[3.5vw] sm:text-[2.8vw] lg:text-[1vw] xl:text-[0.9vw] text-foreground tracking-tight">Ask Your Councellor</span>
                 <p className="text-[2.5vw] sm:text-[2vw] lg:text-[0.7vw] xl:text-[0.6vw] text-muted-foreground font-medium">Admin Dashboard</p>
               </div>
             )}
@@ -138,29 +157,31 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Bottom actions */}
-        <div className={cn(
-          "absolute left-0 right-0 px-[3vw] sm:px-[2.5vw] lg:px-[1vw] xl:px-[0.8vw]",
-          isCollapsed ? "bottom-[3vw] sm:bottom-[2.5vw] lg:bottom-[1.2vw] xl:bottom-[1vw]" : "bottom-[3vw] sm:bottom-[2.5vw] lg:bottom-[1.2vw] xl:bottom-[1vw]"
-        )}>
-          <Button
-            onClick={() => setShowLogoutModal(true)}
-            className={cn(
-              "group flex items-center justify-center w-full gap-[2vw] sm:gap-[1.6vw] lg:gap-[0.7vw] xl:gap-[0.6vw] rounded-[2vw] sm:rounded-[1.5vw] lg:rounded-[0.8vw] xl:rounded-[0.6vw] bg-red-600 hover:bg-red-700 border-0 transition-all shadow-sm hover:shadow-md",
-              isCollapsed ? "py-[2vw] sm:py-[1.5vw] lg:py-[0.7vw] xl:py-[0.6vw]" : "py-[2.2vw] sm:py-[1.8vw] lg:py-[0.8vw] xl:py-[0.7vw]"
-            )}
-          >
-            <LogOut className={cn(
-              "text-white transition-colors",
-              isCollapsed ? "h-[4vw] w-[4vw] sm:h-[3vw] sm:w-[3vw] lg:h-[1.2vw] lg:w-[1.2vw] xl:h-[1vw] xl:w-[1vw]" : "h-[3.5vw] w-[3.5vw] sm:h-[2.8vw] sm:w-[2.8vw] lg:h-[1vw] lg:w-[1vw] xl:h-[0.9vw] xl:w-[0.9vw]"
-            )} />
-            {!isCollapsed && (
-              <span className="text-[2.8vw] sm:text-[2.2vw] lg:text-[0.85vw] xl:text-[0.75vw] font-semibold text-white transition-colors">
-                Logout
-              </span>
-            )}
-          </Button>
-        </div>
+        {/* Bottom actions - hidden on sign-in page */}
+        {!isSignInPage && (
+          <div className={cn(
+            "absolute left-0 right-0 px-[3vw] sm:px-[2.5vw] lg:px-[1vw] xl:px-[0.8vw]",
+            isCollapsed ? "bottom-[3vw] sm:bottom-[2.5vw] lg:bottom-[1.2vw] xl:bottom-[1vw]" : "bottom-[3vw] sm:bottom-[2.5vw] lg:bottom-[1.2vw] xl:bottom-[1vw]"
+          )}>
+            <Button
+              onClick={handleLogout}
+              className={cn(
+                "group flex items-center justify-center w-full gap-[2vw] sm:gap-[1.6vw] lg:gap-[0.7vw] xl:gap-[0.6vw] rounded-[2vw] sm:rounded-[1.5vw] lg:rounded-[0.8vw] xl:rounded-[0.6vw] bg-red-600 hover:bg-red-700 border-0 transition-all shadow-sm hover:shadow-md",
+                isCollapsed ? "py-[2vw] sm:py-[1.5vw] lg:py-[0.7vw] xl:py-[0.6vw]" : "py-[2.2vw] sm:py-[1.8vw] lg:py-[0.8vw] xl:py-[0.7vw]"
+              )}
+            >
+              <LogOut className={cn(
+                "text-white transition-colors",
+                isCollapsed ? "h-[4vw] w-[4vw] sm:h-[3vw] sm:w-[3vw] lg:h-[1.2vw] lg:w-[1.2vw] xl:h-[1vw] xl:w-[1vw]" : "h-[3.5vw] w-[3.5vw] sm:h-[2.8vw] sm:w-[2.8vw] lg:h-[1vw] lg:w-[1vw] xl:h-[0.9vw] xl:w-[0.9vw]"
+              )} />
+              {!isCollapsed && (
+                <span className="text-[2.8vw] sm:text-[2.2vw] lg:text-[0.85vw] xl:text-[0.75vw] font-semibold text-white transition-colors">
+                  Logout
+                </span>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Collapsed sidebar expand button */}
@@ -173,70 +194,6 @@ export function Sidebar() {
         >
           <Menu className="h-[3.5vw] w-[3.5vw] sm:h-[3vw] sm:w-[3vw] lg:h-[1vw] lg:w-[1vw] xl:h-[0.8vw] xl:w-[0.8vw]" />
         </Button>
-      )}
-
-      {/* Professional Logout Modal */}
-      {showLogoutModal && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] animate-in fade-in duration-200"
-            onClick={() => setShowLogoutModal(false)}
-          />
-          
-          {/* Modal */}
-          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-[90vw] max-w-md animate-in zoom-in-95 fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-              {/* Header */}
-              <div className="p-6 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-100">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                    <LogOut className="w-6 h-6 text-red-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">Confirm Logout</h3>
-                    <p className="text-sm text-gray-600 mt-0.5">You're about to end your session</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Body */}
-              <div className="p-6">
-                <p className="text-gray-700">
-                  Are you sure you want to logout? You'll need to sign in again to access the admin dashboard.
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3 justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowLogoutModal(false)}
-                  className="px-6 font-semibold hover:bg-white transition-colors"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={async () => {
-                    setShowLogoutModal(false)
-                    try {
-                      await signOut(auth)
-                      setTimeout(() => {
-                        window.location.href = '/sign-in'
-                      }, 150)
-                    } catch (error) {
-                      console.error('Logout error:', error)
-                      window.location.href = '/sign-in'
-                    }
-                  }}
-                  className="px-6 bg-red-600 hover:bg-red-700 text-white font-semibold shadow-sm hover:shadow-md transition-all"
-                >
-                  Logout
-                </Button>
-              </div>
-            </div>
-          </div>
-        </>
       )}
     </>
   )

@@ -5,6 +5,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../config/firebaseConfig';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
+import toast from 'react-hot-toast';
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -31,34 +32,42 @@ export default function SignInScreen() {
   const onLogin = async () => {
     const e = email.trim();
     const p = password.trim();
-    if (!e || !p) return window.alert('Enter email and password');
-    setLoading(true);
-    try {
-      const cred = await signInWithEmailAndPassword(auth, e, p);
-      try {
-        const u = cred.user;
-        const userRef = doc(db, 'users', u.uid);
-        const snap = await getDoc(userRef);
-        if (!snap.exists()) {
-          await setDoc(userRef, {
-            email: u.email || e,
-            username: u.displayName || (e.split('@')[0]),
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          }, { merge: true });
-        } else {
-          await setDoc(userRef, { updatedAt: serverTimestamp() }, { merge: true });
-        }
-      } catch (pf) {
-        console.warn('[AUTH][signin] ensure profile failed', pf);
-      }
-      router.replace('/');
-    } catch (err) {
-      const msg = friendlyAuthError(err?.code) || (err?.message ? String(err.message) : 'Unknown error');
-      window.alert(msg);
-    } finally {
-      setLoading(false);
+    if (!e || !p) {
+      toast.error('Enter email and password');
+      return;
     }
+    
+    toast.promise(
+      (async () => {
+        const cred = await signInWithEmailAndPassword(auth, e, p);
+        try {
+          const u = cred.user;
+          const userRef = doc(db, 'users', u.uid);
+          const snap = await getDoc(userRef);
+          if (!snap.exists()) {
+            await setDoc(userRef, {
+              email: u.email || e,
+              username: u.displayName || (e.split('@')[0]),
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            }, { merge: true });
+          } else {
+            await setDoc(userRef, { updatedAt: serverTimestamp() }, { merge: true });
+          }
+        } catch (pf) {
+          console.warn('[AUTH][signin] ensure profile failed', pf);
+        }
+        router.replace('/');
+      })(),
+      {
+        loading: 'Signing in...',
+        success: 'Signed in successfully!',
+        error: (err) => {
+          const msg = friendlyAuthError(err?.code) || (err?.message ? String(err.message) : 'Unknown error');
+          return msg;
+        },
+      }
+    );
   };
 
   return (

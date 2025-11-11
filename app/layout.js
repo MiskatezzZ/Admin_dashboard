@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Ask Your Councillor - Admin Dashboard",
+  title: "Ask Your Councellor - Admin Dashboard",
   description: "Modern admin dashboard for educational counseling platform",
 };
 
