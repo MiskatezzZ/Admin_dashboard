@@ -56,6 +56,19 @@ export default function ExamsAdmin() {
     loadExams()
   }, [])
 
+  const onDelete = async (id) => {
+    if (!id) return
+    if (!confirm('Delete this exam?')) return
+    try {
+      const res = await fetch('/api/exams', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+      const json = await res.json()
+      if (!res.ok || json?.success !== true) throw new Error(json?.message || 'Failed to delete')
+      await loadExams()
+    } catch (e) {
+      toast.error(e?.message || 'Delete failed')
+    }
+  }
+
   const onPublish = async () => {
     if (!type) return toast.error('Select exam type')
     if (!examDate) return toast.error('Enter exam date')
@@ -263,6 +276,7 @@ export default function ExamsAdmin() {
                       <TableHead className="font-bold text-xs text-gray-700 uppercase tracking-wider py-4">Exam Date</TableHead>
                       <TableHead className="font-bold text-xs text-gray-700 uppercase tracking-wider py-4">Application Period</TableHead>
                       <TableHead className="font-bold text-xs text-gray-700 uppercase tracking-wider py-4 text-center">Status</TableHead>
+                      <TableHead className="font-bold text-xs text-gray-700 uppercase tracking-wider py-4 text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -305,6 +319,12 @@ export default function ExamsAdmin() {
                             <Check className="h-3 w-3 mr-1 inline" />
                             Published
                           </Badge>
+                        </TableCell>
+                        <TableCell className="py-5 text-right">
+                          <Button variant="destructive" size="sm" onClick={() => onDelete(e.id)}>
+                            <X className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

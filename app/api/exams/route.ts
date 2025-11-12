@@ -1,10 +1,19 @@
-// Exams API with simple JSON file persistence
+// Exams API backed by Firestore
 import { NextResponse } from 'next/server'
-import { promises as fs } from 'fs'
-import path from 'path'
+import { db } from "../../config/firebaseConfig"
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  orderBy,
+  limit as fbLimit,
+  doc,
+  deleteDoc,
+} from 'firebase/firestore'
 
 type Exam = {
-  id: number
+  id?: string
   title: string
   type: string
   examDate?: string
@@ -14,70 +23,51 @@ type Exam = {
   createdAt?: string
 }
 
-const dataPath = path.join(process.cwd(), 'data', 'exams.json')
-
-// Ensure Node.js runtime and disable caching for dynamic read/write
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-async function readExams(): Promise<Exam[]> {
+// GET /api/exams - Get all exam notifications from Firestore
+export async function GET(request: Request) {
   try {
-    const raw = await fs.readFile(dataPath, 'utf-8')
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed as Exam[] : []
-  } catch (e: any) {
-    if (e?.code === 'ENOENT') {
-      await fs.mkdir(path.dirname(dataPath), { recursive: true })
-      await fs.writeFile(dataPath, '[]', 'utf-8')
-      return []
-    }
-    throw e
+    const url = new URL(request.url)
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10), 200)
+    const qRef = query(collection(db, 'exams'), orderBy('createdAt', 'desc'), fbLimit(limit))
+    const snap = await getDocs(qRef)
+    const data: Exam[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<Exam, 'id'>) }))
+    return NextResponse.json({ success: true, data, total: data.length, limit })
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: 'Failed to fetch exams', error: error?.message }, { status: 500 })
   }
 }
 
-async function writeExams(exams: Exam[]) {
-  await fs.writeFile(dataPath, JSON.stringify(exams, null, 2), 'utf-8')
-}
-
-// GET /api/exams - Get all exam notifications
-export async function GET() {
-  const data = await readExams()
-  return NextResponse.json({ success: true, data, total: data.length })
-}
-
-// POST /api/exams - Create new exam notification
+// POST /api/exams - Create new exam notification in Firestore
 export async function POST(request: Request) {
   try {
     const body = await request.json() as Partial<Exam>
     if (!body?.type) return NextResponse.json({ success: false, message: 'type is required' }, { status: 400 })
-    const now = Date.now()
-    const exam: Exam = {
-      id: now,
+    const nowIso = new Date().toISOString()
+    const payload = {
       title: body.title || body.type!,
       type: body.type!,
-      examDate: body.examDate,
-      applicationStart: body.applicationStart,
-      applicationEnd: body.applicationEnd,
+      examDate: body.examDate || '',
+      applicationStart: body.applicationStart || '',
+      applicationEnd: body.applicationEnd || '',
       published: body.published ?? true,
-      createdAt: new Date(now).toISOString()
+      createdAt: body.createdAt || nowIso,
     }
-    const list = await readExams()
-    list.unshift(exam)
-    await writeExams(list)
-    return NextResponse.json({ success: true, message: 'Exam notification created successfully', data: exam })
+    const ref = await addDoc(collection(db, 'exams'), payload)
+    return NextResponse.json({ success: true, message: 'Exam notification created successfully', data: { id: ref.id, ...payload } })
   } catch (error: any) {
     return NextResponse.json({ success: false, message: 'Failed to create exam notification', error: error.message }, { status: 500 })
   }
 }
 
-// DELETE /api/exams/[id] - Delete exam notification
+// DELETE /api/exams - Delete exam notification by Firestore doc id
 export async function DELETE(request: Request) {
   try {
-    const { id } = await request.json() as { id?: number }
+    const { id } = await request.json() as { id?: string }
     if (!id) return NextResponse.json({ success: false, message: 'id is required' }, { status: 400 })
-    const list = await readExams()
-    const next = list.filter(x => x.id !== id)
-    await writeExams(next)
+    await deleteDoc(doc(collection(db, 'exams'), String(id)))
     return NextResponse.json({ success: true, message: 'Exam notification deleted successfully' })
   } catch (error: any) {
     return NextResponse.json({ success: false, message: 'Failed to delete exam notification', error: error.message }, { status: 500 })
