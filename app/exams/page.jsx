@@ -65,7 +65,7 @@ export default function ExamsAdmin() {
       if (!res.ok || json?.success !== true) throw new Error(json?.message || 'Failed to delete')
       await loadExams()
     } catch (e) {
-      toast.error(e?.message || 'Delete failed')
+      toast.error(e?.message || 'Delete failedd')
     }
   }
 
