@@ -84,8 +84,27 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-30 flex h-[10vh] sm:h-[8vh] lg:h-[6vh] xl:h-[5vh] items-center gap-[2vw] sm:gap-[1.5vw] lg:gap-[1vw] xl:gap-[0.8vw] border-b border-border/50 bg-white/95 backdrop-blur-md px-[4vw] sm:px-[3vw] lg:px-[2vw] xl:px-[1.5vw]">
-      {/* Search bar */}
-      <div className="flex-1 max-w-[50vw] sm:max-w-[40vw] lg:max-w-[30vw] xl:max-w-[25vw]" ref={searchRef}>
+      {/* Profile summary - now on the left */}
+      <div className="flex items-center gap-[2vw] sm:gap-[1.5vw] lg:gap-[1vw] xl:gap-[0.8vw]">
+        {user && (
+          <>
+            <div className="hidden md:flex flex-col items-end leading-tight">
+              <span className="text-[2.5vw] sm:text-[2vw] lg:text-[0.95vw] xl:text-[0.85vw] font-semibold text-foreground">
+                {user.displayName || user.email?.split('@')[0] || 'Admin'}
+              </span>
+              <span className="text-[2vw] sm:text-[1.6vw] lg:text-[0.75vw] xl:text-[0.65vw] text-muted-foreground tracking-tight">
+                {user.email || 'No email'}
+              </span>
+            </div>
+            <div className="h-[7vw] w-[7vw] sm:h-[5.5vw] sm:w-[5.5vw] lg:h-[2.4vw] lg:w-[2.4vw] xl:h-[2vw] xl:w-[2vw] rounded-full bg-gradient-to-br from-slate-900 via-slate-700 to-slate-500 ring-2 ring-slate-200 flex items-center justify-center text-white text-[3vw] sm:text-[2.4vw] lg:text-[0.9vw] xl:text-[0.8vw] font-semibold">
+              {user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'A'}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Search bar - now on the right */}
+      <div className="flex-1 max-w-[50vw] sm:max-w-[40vw] lg:max-w-[30vw] xl:max-w-[25vw] ml-auto" ref={searchRef}>
         <div className="relative">
           <Search className="absolute left-[2vw] sm:left-[1.5vw] lg:left-[0.8vw] xl:left-[0.6vw] top-1/2 h-[3vw] w-[3vw] sm:h-[2.5vw] sm:w-[2.5vw] lg:h-[1vw] lg:w-[1vw] xl:h-[0.8vw] xl:w-[0.8vw] -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -186,26 +205,6 @@ export function Navbar() {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Minimal profile summary */}
-      <div className="flex-1" />
-      <div className="flex items-center gap-[2vw] sm:gap-[1.5vw] lg:gap-[1vw] xl:gap-[0.8vw]">
-        {user && (
-          <>
-            <div className="hidden md:flex flex-col items-end leading-tight">
-              <span className="text-[2.5vw] sm:text-[2vw] lg:text-[0.95vw] xl:text-[0.85vw] font-semibold text-foreground">
-                {user.displayName || user.email?.split('@')[0] || 'Admin'}
-              </span>
-              <span className="text-[2vw] sm:text-[1.6vw] lg:text-[0.75vw] xl:text-[0.65vw] text-muted-foreground tracking-tight">
-                {user.email || 'No email'}
-              </span>
-            </div>
-            <div className="h-[7vw] w-[7vw] sm:h-[5.5vw] sm:w-[5.5vw] lg:h-[2.4vw] lg:w-[2.4vw] xl:h-[2vw] xl:w-[2vw] rounded-full bg-gradient-to-br from-slate-900 via-slate-700 to-slate-500 ring-2 ring-slate-200 flex items-center justify-center text-white text-[3vw] sm:text-[2.4vw] lg:text-[0.9vw] xl:text-[0.8vw] font-semibold">
-              {user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'A'}
-            </div>
-          </>
-        )}
       </div>
     </header>
   )

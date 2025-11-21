@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils.js"
 import { Button } from "@/components/ui/button.jsx"
 import { navigationItems } from "@/lib/dummy-data.js"
@@ -28,6 +28,7 @@ const iconMap = {
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   
@@ -38,9 +39,9 @@ export function Sidebar() {
     toast.promise(
       (async () => {
         await signOut(auth)
-        setTimeout(() => {
-          window.location.href = '/sign-in'
-        }, 150)
+        setIsMobileOpen(false)
+        setIsCollapsed(false)
+        router.push('/sign-in')
       })(),
       {
         loading: 'Logging out...',
@@ -72,7 +73,7 @@ export function Sidebar() {
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed left-0 top-0 z-50 h-full bg-white/95 backdrop-blur-md border-r border-border/50 transition-all duration-300 ease-in-out lg:static lg:translate-x-0",
+        "fixed left-0 top-0 z-50 h-full bg-white/95 backdrop-blur-md border-r border-border/50 transition-all duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col",
         isCollapsed ? "w-16" : "w-64",
         isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
@@ -160,8 +161,7 @@ export function Sidebar() {
         {/* Bottom actions - hidden on sign-in page */}
         {!isSignInPage && (
           <div className={cn(
-            "absolute left-0 right-0 px-[3vw] sm:px-[2.5vw] lg:px-[1vw] xl:px-[0.8vw]",
-            isCollapsed ? "bottom-[3vw] sm:bottom-[2.5vw] lg:bottom-[1.2vw] xl:bottom-[1vw]" : "bottom-[3vw] sm:bottom-[2.5vw] lg:bottom-[1.2vw] xl:bottom-[1vw]"
+            "mt-auto px-[3vw] sm:px-[2.5vw] lg:px-[1vw] xl:px-[0.8vw] pb-[3vw] sm:pb-[2.5vw] lg:pb-[1.2vw] xl:pb-[1vw]"
           )}>
             <Button
               onClick={handleLogout}
